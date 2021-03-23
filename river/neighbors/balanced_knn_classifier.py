@@ -56,7 +56,7 @@ class KNeighborsBalancedBuffer:
         """
 
         if not self._is_initialized:
-            self._n_features = x.shape[1]
+            self._n_features = x.shape[1] # make sure shape is ok - Test method to make sure that it works
             self._n_targets = y.shape[1]
             self._configure()
 
