@@ -41,6 +41,10 @@ class KNeighborsBalancedBuffer:
         # # TODO:
         return self
 
+    def test_print(self):
+        print("X: ",self._X)
+        print("Y: ",self._y)
+
     def _configure(self):# Binary instance mask to filter data in the buffer
         self._imask = np.zeros([self.classes, self.window_size], dtype=bool)
         self._X = np.zeros((self.classes, self.window_size, self._n_features))
@@ -55,32 +59,31 @@ class KNeighborsBalancedBuffer:
             The target data for a single sample.
         """
 
+        print(x)
+        print(y)
+
         if not self._is_initialized:
-            self._n_features = x.shape[1] # make sure shape is ok - Test method to make sure that it works
-            self._n_targets = y.shape[1]
+            self._n_features = get_dimensions(x)[1]
+            self._n_targets = get_dimensions(y)[1]
             self._configure()
 
-        if self._n_features != x.shape[2]:
+        if self._n_features != get_dimensions(x)[1]:
             raise ValueError(
                 "Inconsistent number of features in X: {}, previously observed {}.".format(
-                    x.shape[2], self._n_features
+                    get_dimensions(x)[1], self._n_features
                 )
             )
 
-        self._X[self.classes, self._next_insert[self.classes], :] = x
-        self._y[self.classes, self._next_insert[self.classes]] = y
+        self._X[y, self._next_insert[y], :] = x
+        self._y[y, self._next_insert[y]] = y
 
-        slot_replaced = self._imask[self.classes, self._next_insert[self.classes]]
+        slot_replaced = self._imask[y, self._next_insert[y]]
 
-        # Update the instance storing logic
-        self._imask[self.classes, self._next_insert[self.classes]] = True  # Mark slot as filled
-        self._next_insert[self.classes] = (
-            self._next_insert[self.classes] + 1 if self._next_insert[self.classes] < self.window_size - 1 else 0
-        )
 
-        if (
-            slot_replaced
-        ):  # The oldest sample was replaced (complete cycle in the buffer)
+        self._imask[y, self._next_insert[y]] = True
+        self._next_insert[y] = (self._next_insert[y] + 1 if self._next_insert[y] < self.window_size - 1 else 0)
+
+        if (slot_replaced):  # The oldest sample was replaced (complete cycle in the buffer)
             self._oldest = self._next_insert[self.classes]
         else:  # Actual buffer increased
             self._size += 1
@@ -93,4 +96,5 @@ class KNeighborsBalancedBuffer:
         # This property must return the features as an
         # np.ndarray since it will be used to search for
         # neighbors via a KDTree
-        return self
+
+        return self._X[class_idx,self._imask[class_idx]]
