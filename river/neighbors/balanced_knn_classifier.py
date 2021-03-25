@@ -38,7 +38,17 @@ class KNeighborsBalancedBuffer:
         self._size: int = 0
 
     def reset(self):
-        # # TODO:
+        """Reset the sliding window. """
+        self._n_features = -1
+        self._n_targets = -1
+        self._size = 0
+        self._next_insert = 0
+        self._oldest = 0
+        self._imask = None
+        self._X = None
+        self._y = None
+        self._is_initialized = False
+
         return self
 
     def test_print(self):
