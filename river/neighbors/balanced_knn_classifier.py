@@ -14,15 +14,17 @@ from river import base
 from river.utils.skmultiflow_utils import get_dimensions
 
 class BalancedKNNClassifier(KNNClassifier):
-    def __init__(self,n_neighbors=5,max_window_size=1000,leaf_size=30,metric='euclidean',classes=None,weighted=True):
-        super().__init__(n_neighbors=n_neighbors, max_window_size=max_window_size,leaf_size=leaf_size,metric=metric,weighted=weighted)
+    def __init__(self,n_neighbors=5,max_window_size=1000,leaf_size=30,p=2,classes=None,weighted=True):
+        super().__init__(n_neighbors=n_neighbors, max_window_size=max_window_size,leaf_size=leaf_size,p=p,weighted=weighted)
         self.data_window = KNeighborsBalancedBuffer(window_size=max_window_size,classes=classes)
         self.max_window_size = max_window_size
-        self.metric = metric
+
 
 
     def _get_neighbors(self, x, class_idx):
         X = self.data_window.features_buffer(class_idx)
+
+        #print(X)
         #print("Class features: " + str(class_idx))
         #print(X)
         #tree = cKDTree(X, leafsize=self.leaf_size, **self._kwargs)
@@ -54,9 +56,11 @@ class BalancedKNNClassifier(KNNClassifier):
 
         """
 
+
+
         proba = {class_idx: 0.0 for class_idx in self.classes_}
 
-        for idx , _ in enumerate(self.classes_):
+        for idx , _ in enumerate(self.data_window.bufferClasses()):
             if self.data_window.size(0) == 0:
                 return proba
 
@@ -64,16 +68,18 @@ class BalancedKNNClassifier(KNNClassifier):
 
         output = []
 
-        for i, label in enumerate(self.classes_):
+        for i,label in enumerate(self.data_window.bufferClasses()):
+            #print("index: " + str(i))
+            #print("lable: " + str(label))
             distance, _ = self._get_neighbors(x_arr,i)
 
             # If the closest neighbor has a distance of 0, then return it's output
             if distance[0][0] == 0:
-                proba[i] = 1.0
+                proba[label] = 1.0
                 return proba
 
             #print(distance)
-            #print("class: " + str(label) + " index: " + str(i))
+            #print("class: " + str(label) + " index: " + str(i) + "print class" + str(self.classes_))
 
             if self.data_window.size(i) < self.n_neighbors:  # Select only the valid neighbors
                 #neighbor_idx = [index for cnt, index in enumerate(neighbor_idx[0])if cnt < self.data_window.size()]
@@ -86,14 +92,19 @@ class BalancedKNNClassifier(KNNClassifier):
             #creating final output array to be sorted and checked for majority
             output.extend(list(zip(distance,[label for _ in range(self.n_neighbors)])))
             #print(output)
+
+            #print(output)
             #print("------------------")
 
         #now sort the array
         newOutput = sorted(output, key=lambda x: x[0])
         #print(newOutput)
+
+
         #print("-----------------------finish----------")
         #Gettting the top five
         finalOutput = newOutput[:self.n_neighbors]
+
         #print(finalOutput)
         #print(self.weighted)
 
@@ -102,7 +113,11 @@ class BalancedKNNClassifier(KNNClassifier):
                 proba[index[1]] += 1.0
         else:  # Use the inverse of the distance to weight the votes
             for index in finalOutput:
+                #print(index)
                 proba[index[1]] += 1.0 / index[0]
+
+        #print(proba)
+        #print("________________________")
 
         return softmax(proba)
 
@@ -165,11 +180,6 @@ class KNeighborsBalancedBuffer():
 
         self._X[yIndex, self._next_insert[yIndex],:] = x
 
-        #print("------Start__________")
-        #print(self._X)
-        #print("____---finsih--------")
-
-
         slot_replaced = self._imask[yIndex, self._next_insert[yIndex]]
 
         self._imask[yIndex, self._next_insert[yIndex]] = True
@@ -177,8 +187,6 @@ class KNeighborsBalancedBuffer():
 
         if not slot_replaced:
             self._size[yIndex] += 1 #This is not used after size == window - size of
-
-
 
         return self
 
@@ -188,7 +196,13 @@ class KNeighborsBalancedBuffer():
         # This property must return the features as an
         # np.ndarray since it will be used to search for
         # neighbors via a KDTree
+        #print(self._X)
         return self._X[class_idx, self._imask[class_idx]]
+
+    def bufferClasses(self):
+        """Returns array of classes specified in the buffer """
+        #print(self.classes)
+        return self.classes
 
     def size(self,class_idx) -> int:
         """Get the window size. """
