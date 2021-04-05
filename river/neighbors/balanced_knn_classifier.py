@@ -4,6 +4,7 @@ from .base_neighbors import BaseNeighbors, KNeighborsBuffer
 from river import base
 import itertools
 import typing
+import statistics
 
 import numpy as np
 from scipy.spatial import cKDTree
@@ -88,38 +89,51 @@ class BalancedKNNClassifier(KNNClassifier):
                 #neighbor_idx = neighbor_idx[0]
                 distance = distance[0]
 
+
+            #print([(average_distance,label)])
+            average_distance = statistics.mean(distance);
         #    print(list(zip(distance,[label for _ in range(self.n_neighbors)])))
             #creating final output array to be sorted and checked for majority
-            output.extend(list(zip(distance,[label for _ in range(self.n_neighbors)])))
+            output.extend([(average_distance,label)])
             #print(output)
 
             #print(output)
             #print("------------------")
-
-        #now sort the array
-        newOutput = sorted(output, key=lambda x: x[0])
         #print(newOutput)
 
 
         #print("-----------------------finish----------")
         #Gettting the top five
-        finalOutput = newOutput[:self.n_neighbors]
+
 
         #print(finalOutput)
         #print(self.weighted)
 
-        if not self.weighted:  # Uniform weights
-            for index in finalOutput:
+        #print("----------------------------------S-")
+        #print(output)
+
+
+        """if not self.weighted:  # Uniform weights
+            for index in output:
                 proba[index[1]] += 1.0
         else:  # Use the inverse of the distance to weight the votes
-            for index in finalOutput:
+            for index in output:
                 #print(index)
-                proba[index[1]] += 1.0 / index[0]
+                proba[index[1]] += 1.0 / index[0]"""
+
+        for index in output:
+            #print(index)
+            proba[index[1]] = 1.0/index[0]
 
         #print(proba)
         #print("________________________")
 
+        #print(proba)
+        #print("proba: " ,softmax(proba))
+        #print("----------------------------------f-")
+
         return softmax(proba)
+
 
 class KNeighborsBalancedBuffer():
 
