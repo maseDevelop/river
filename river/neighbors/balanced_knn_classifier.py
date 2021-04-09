@@ -15,7 +15,7 @@ from river.utils.skmultiflow_utils import get_dimensions
 class BalancedKNNClassifier(KNNClassifier):
     def __init__(self, n_neighbors=5, max_window_size=1000, leaf_size=30, p=2, classes=None):
         super().__init__(n_neighbors=n_neighbors, max_window_size=max_window_size,
-                         leaf_size=leaf_size, p=p, weighted=weighted)
+                         leaf_size=leaf_size, p=p)
         self.data_window = KNeighborsBalancedBuffer(
             window_size=max_window_size, classes=classes)
         self.max_window_size = max_window_size
