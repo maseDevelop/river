@@ -6,6 +6,9 @@ one-hot encoding categorical features. The difference with the `feature_extracti
 the latter extracts new information from the data
 
 """
+
+from .filter import FixedThresholdFilter
+
 from .feature_hasher import FeatureHasher
 from .impute import PreviousImputer, StatImputer
 from .lda import LDA
@@ -20,6 +23,8 @@ from .scale import (
     StandardScaler,
 )
 
+
+
 __all__ = [
     "AdaptiveStandardScaler",
     "Binarizer",
@@ -33,4 +38,5 @@ __all__ = [
     "RobustScaler",
     "StandardScaler",
     "StatImputer",
+    "FixedThresholdFilter",
 ]
