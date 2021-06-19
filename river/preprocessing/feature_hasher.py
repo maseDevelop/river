@@ -7,7 +7,6 @@ from river import base
 
 __all__ = ["FeatureHasher"]
 
-
 class FeatureHasher(base.Transformer):
     """Implements the hashing trick.
 
